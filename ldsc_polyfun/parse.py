@@ -26,20 +26,20 @@ def read_csv(fh, **kwargs):
         df = pd.read_parquet(fh)
         if 'usecols' in kwargs.keys():
             df = df[kwargs['usecols']]
-    else:        
+    else:
         df = pd.read_csv(fh, sep=r"\s+", na_values='.', **kwargs)
-    
+
     return df
-    
+
 def set_snpid_index(df):
-    
+
     def float_to_int(c):
         try:
             c = int(c)
         except ValueError:
             pass
         return c
-    
+
     df['A1_first'] = (df['A1'] < df['A2']) | (df['A1'].str.len()>1) | (df['A2'].str.len()>1)
     df['A1s'] = df['A2'].copy()
     df.loc[df['A1_first'], 'A1s'] = df.loc[df['A1_first'], 'A1'].copy()
@@ -67,7 +67,7 @@ def which_compression(fh):
     #import ipdb; ipdb.set_trace()
     if os.access(fh + '.parquet', 4):
         suffix = '.parquet'
-        compression = 'parquet'        
+        compression = 'parquet'
     elif os.access(fh + '.hdf', 4):
         suffix = '.hdf'
         compression = 'hdf'
@@ -123,8 +123,8 @@ def sumstats(fh, alleles=True, dropna=True):
 
     if dropna:
         x = x.dropna(how='any')
-        
-    x = set_snpid_index(x)    
+
+    x = set_snpid_index(x)
     x.drop(columns=['CHR', 'BP'], inplace=True)
 
 
@@ -137,7 +137,7 @@ def ldscore_fromlist(flist, num=None):
     for fh_i, fh in enumerate(flist):
         y = ldscore(fh, num)
         if len(ldscore_array)>0:
-        
+
             #make sure that all files contain the same SNPs in the same order
             if ((not series_eq(y.index, ldscore_array[0].index) or not series_eq(y.SNP, ldscore_array[0].SNP))):
                 all_baseline_snps_found = np.all(ldscore_array[0].index.isin(y.index))
@@ -146,11 +146,11 @@ def ldscore_fromlist(flist, num=None):
                 extra_snps_found = np.any(~(y.index.isin(ldscore_array[0].index)))
                 if extra_snps_found:
                     logging.warning('some SNPs in one of the sets of annotations are not found in the first set of annotations. We will ignore these SNPs')
-                    
+
                 #reorder the SNPs to make sure that they're in the corret order
                 y = y.loc[ldscore_array[0].index]
                 assert series_eq(y.index, ldscore_array[0].index) and series_eq(y.SNP, ldscore_array[0].SNP)
-            
+
             # keep SNP and CHR column from only the first file
             y = y.drop(columns=['SNP', 'CHR'], axis=1)
 
@@ -224,13 +224,13 @@ def ldscore(fh, num=None):
     is_sorted = True
     for c in x['CHR'].unique():
         is_sorted = np.all(np.diff(x.loc[x['CHR']==c, 'BP']) >= 0)
-        if not is_sorted: break            
+        if not is_sorted: break
     if not is_sorted:
         x.sort_values(by=['CHR', 'BP'], inplace=True) # SEs will be wrong unless sorted
-        
-        
+
+
     x.drop(columns=['BP'], inplace=True)
-    
+
     if x.index.name == 'snpid':
         is_duplicate_snp = x.index.duplicated()
         if np.any(is_duplicate_snp):
@@ -240,9 +240,9 @@ def ldscore(fh, num=None):
             raise ValueError(error_msg)
     else:
         if np.any(x['SNP'].duplicated()):
-            x.drop_duplicates(subset='SNP', inplace=True)    
+            x.drop_duplicates(subset='SNP', inplace=True)
     return x
-    
+
 
 
 def M(fh, num=None, N=2, common=False):
@@ -304,13 +304,13 @@ def annot(fh_list, num=None, frqfile=None, anno=None):
                 list_c = [c for c_list in list_list_c for c in c_list]
                 for a in anno:
                     assert a in list_c, 'Annotation %s was not found in the annotations file'%(a)
-                    
+
             annot_matrix_chr_list = [np.matrix(df_annot_chr) for df_annot_chr in df_annot_chr_list]
             if len(annot_matrix_chr_list)==1:
                 annot_matrix_chr = annot_matrix_chr_list[0]
             else:
                 annot_matrix_chr = np.hstack(annot_matrix_chr_list)
-                
+
             y.append(np.dot(annot_matrix_chr.T, annot_matrix_chr))
             M_tot += len(df_annot_chr_list[0])
 
@@ -338,7 +338,7 @@ def annot(fh_list, num=None, frqfile=None, anno=None):
             list_c = [c for c_list in list_list_c for c in c_list]
             for a in anno:
                 assert a in list_c, 'Annotation %s was not found in the annotations file'%(a)
-                
+
         annot_matrix_list = [np.matrix(y) for y in df_annot_list]
         annot_matrix = np.hstack(annot_matrix_list)
         x = np.dot(annot_matrix.T, annot_matrix)
