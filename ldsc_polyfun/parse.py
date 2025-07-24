@@ -27,7 +27,7 @@ def read_csv(fh, **kwargs):
         if 'usecols' in kwargs.keys():
             df = df[kwargs['usecols']]
     else:        
-        df = pd.read_csv(fh, delim_whitespace=True, na_values='.', **kwargs)
+        df = pd.read_csv(fh, sep=r"\s+", na_values='.', **kwargs)
     
     return df
     
@@ -367,7 +367,7 @@ def __ID_List_Factory__(colnames, keepcol, fname_end, header=None, usecols=None)
 
             comp = get_compression(fname)
             self.df = pd.read_csv(fname, header=self.__header__, usecols=self.__usecols__,
-                                  delim_whitespace=True, compression=comp)
+                                  sep=r"\s+", compression=comp)
 
             if self.__colnames__:
                 self.df.columns = self.__colnames__
